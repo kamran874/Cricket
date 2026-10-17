@@ -48,6 +48,10 @@ export interface BallEvent {
   totalRuns: number // everything added to team score this ball
   wicket: boolean
   dismissal?: Dismissal
+  /** True if this delivery was a free hit (the ball right after a no-ball,
+   *  or a run of illegal deliveries chained from one) — only a run out can
+   *  dismiss the batsman on a free hit. */
+  freeHit: boolean
   strikerId: string
   nonStrikerId: string
   bowlerId: string

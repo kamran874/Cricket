@@ -1,4 +1,4 @@
-import { addBall, currentOverIndex, makeBall, newInnings, undoLastBall, replayPointers } from './engine'
+import { addBall, currentOverIndex, currentPartnership, isFreeHit, makeBall, newInnings, undoLastBall, replayPointers } from './engine'
 
 let failures = 0
 function assertEq(actual: unknown, expected: unknown, msg: string) {
@@ -163,6 +163,50 @@ const sub1 = 'sub1'
   // the 6th ball's four takes the score to 24, past the 23 target, mid-over (only 6 of 120 legal balls bowled)
   assertEq(inn.runs, 24, 'score after the chase-winning four')
   assertEq(inn.complete, true, 'innings ends immediately once the target is passed, even mid-over with 19 overs still unbowled')
+}
+
+// ---- Free hit: starts after a no-ball, chains through a wide, clears on a legal ball ----
+{
+  const inn = newInnings('A', S, N, B1)
+  assertEq(isFreeHit(inn), false, 'no free hit before any ball is bowled')
+
+  addBall(inn, makeBall('noball', { batRuns: 0, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn), freeHit: isFreeHit(inn) }), 20, 10)
+  assertEq(isFreeHit(inn), true, 'free hit is on for the ball right after a no-ball')
+
+  addBall(inn, makeBall('wide', { strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn), freeHit: isFreeHit(inn) }), 20, 10)
+  assertEq(isFreeHit(inn), true, 'free hit chains forward through a wide bowled during it')
+
+  addBall(inn, makeBall('normal', { batRuns: 1, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn), freeHit: isFreeHit(inn) }), 20, 10)
+  assertEq(isFreeHit(inn), false, 'free hit clears once a legal delivery is bowled')
+}
+
+// ---- Partnership: resets to 0 runs / 0 balls right after a wicket falls ----
+{
+  const inn = newInnings('A', S, N, B1)
+  addBall(inn, makeBall('normal', { batRuns: 4, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10)
+  addBall(inn, makeBall('normal', { batRuns: 2, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10)
+  let p = currentPartnership(inn)
+  assertEq(p, { runs: 6, balls: 2 }, 'opening partnership: 6 runs off 2 balls')
+
+  addBall(
+    inn,
+    makeBall('wicket', {
+      batRuns: 0,
+      dismissal: { type: 'Bowled', batsmanOutId: inn.strikerId, incomingBatsmanId: sub1 },
+      strikerId: inn.strikerId,
+      nonStrikerId: inn.nonStrikerId,
+      bowlerId: B1,
+      overNumber: currentOverIndex(inn),
+    }),
+    20,
+    10,
+  )
+  p = currentPartnership(inn)
+  assertEq(p, { runs: 0, balls: 0 }, 'partnership resets to 0/0 the instant a wicket falls')
+
+  addBall(inn, makeBall('normal', { batRuns: 3, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10)
+  p = currentPartnership(inn)
+  assertEq(p, { runs: 3, balls: 1 }, 'new partnership builds from the new pair, not the team total')
 }
 
 console.log(failures === 0 ? '\nALL ASSERTIONS PASSED' : `\n${failures} ASSERTION(S) FAILED`)

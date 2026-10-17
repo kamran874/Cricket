@@ -117,9 +117,20 @@ export function remainingBatsmen(match: Match, innings: Innings): Player[] {
   return battingTeam.players.filter((p) => !unavailable.has(p.id))
 }
 
+/** No bowler may send down more than 1/5th of the innings' overs (the
+ *  standard limited-overs rule — e.g. 4 of 20, 10 of 50), rounded up. */
+export function maxOversPerBowler(oversLimit: number): number {
+  return Math.ceil(oversLimit / 5)
+}
+
 export function eligibleBowlers(match: Match, innings: Innings): Player[] {
   const bowlingTeam = team(match, bowlingTeamKey(match, innings))
-  return bowlingTeam.players.filter((p) => p.id !== innings.previousBowlerId)
+  const cap = maxOversPerBowler(match.oversLimit)
+  return bowlingTeam.players.filter((p) => {
+    if (p.id === innings.previousBowlerId) return false
+    const legalBalls = innings.bowlers[p.id]?.legalBalls ?? 0
+    return Math.floor(legalBalls / 6) < cap
+  })
 }
 
 export function fieldingSidePlayers(match: Match, innings: Innings): Player[] {

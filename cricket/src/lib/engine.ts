@@ -50,6 +50,7 @@ export function makeBall(
     nonStrikerId: string
     bowlerId: string
     overNumber: number
+    freeHit?: boolean
   },
 ): BallEvent {
   const batRuns = opts.batRuns ?? 0
@@ -63,6 +64,7 @@ export function makeBall(
     overNumber: opts.overNumber,
     wicket: !!opts.dismissal,
     dismissal: opts.dismissal,
+    freeHit: opts.freeHit ?? false,
   }
   switch (kind) {
     case 'normal':
@@ -264,6 +266,33 @@ export function legalBallsThisOver(innings: Innings): number {
 
 export function isNewOverStarting(innings: Innings): boolean {
   return legalBallsThisOver(innings) === 0
+}
+
+/** The next ball bowled is a free hit if the last one was a no-ball, or was
+ *  itself a free hit that was also illegal (a wide chains the free hit
+ *  forward; a legal delivery clears it). */
+export function isFreeHit(innings: Innings): boolean {
+  const lastOver = innings.overs[innings.overs.length - 1]
+  const lastBall = lastOver?.[lastOver.length - 1]
+  if (!lastBall) return false
+  if (lastBall.kind === 'noball') return true
+  return lastBall.freeHit && !lastBall.legal
+}
+
+/** Runs and legal balls added by the team since the current batting pair
+ *  came together — i.e. since the last wicket fell (or since the innings
+ *  started, for the opening partnership). */
+export function currentPartnership(innings: Innings): { runs: number; balls: number } {
+  const lastWicketScore = innings.fallOfWickets.length ? innings.fallOfWickets[innings.fallOfWickets.length - 1].score : 0
+  let wicketsSeen = 0
+  let balls = 0
+  for (const over of innings.overs) {
+    for (const ball of over) {
+      if (wicketsSeen >= innings.fallOfWickets.length && ball.legal) balls++
+      if (ball.wicket) wicketsSeen++
+    }
+  }
+  return { runs: innings.runs - lastWicketScore, balls }
 }
 
 export function oversDisplay(legalBalls: number): string {

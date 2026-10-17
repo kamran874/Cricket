@@ -6,7 +6,9 @@ import { NameEntry } from '../components/NameEntry'
 import {
   addBall,
   currentOverIndex,
+  currentPartnership,
   economyRate,
+  isFreeHit,
   isNewOverStarting,
   legalBallsThisOver,
   makeBall,
@@ -22,6 +24,7 @@ import {
   eligibleBowlers,
   fieldingSidePlayers,
   finishMatch,
+  maxOversPerBowler,
   playerName,
   remainingBatsmen,
   resolveOrCreatePlayer,
@@ -120,6 +123,8 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
     innings.overs.length > 0 && isNewOverStarting(innings) && innings.currentBowlerId === innings.previousBowlerId
   const battingTeamName = team(m, innings.battingTeam).name
   const bowlingTeamName = team(m, bowlingTeamKey(m, innings)).name
+  const freeHitActive = isFreeHit(innings)
+  const bowlerCap = maxOversPerBowler(m.oversLimit)
 
   const resetWicketWizard = () => {
     setWicketStep(null)
@@ -145,6 +150,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         nonStrikerId: innings.nonStrikerId,
         bowlerId: innings.currentBowlerId,
         overNumber: currentOverIndex(innings),
+        freeHit: freeHitActive,
       })
       addBall(innings, ball, m.oversLimit, maxWickets, target(m) ?? undefined)
       if (m.innings.length === 2 && innings.complete) finishMatch(m)
@@ -192,6 +198,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         nonStrikerId: innings.nonStrikerId,
         bowlerId: innings.currentBowlerId,
         overNumber: currentOverIndex(innings),
+        freeHit: freeHitActive,
       })
       addBall(innings, ball, m.oversLimit, maxWickets, target(m) ?? undefined)
       // A chase ends the instant the target is passed, even mid-over — don't
@@ -223,6 +230,9 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
   const strikerStat = inn.batsmen[inn.strikerId]
   const nonStrikerStat = inn.batsmen[inn.nonStrikerId]
   const bowlerStat = inn.bowlers[inn.currentBowlerId]
+  const partnership = currentPartnership(inn)
+  const runsNeeded = Math.max(0, (target(match) ?? 0) - inn.runs)
+  const ballsRemaining = Math.max(0, match.oversLimit * 6 - inn.legalBalls)
 
   return (
     <div className="mx-auto max-w-md px-4 pb-16" style={{ paddingTop: 'calc(1.25rem + var(--safe-top))' }}>
@@ -290,17 +300,26 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
                 {inn.runs}/{inn.wickets}
               </span>
               <span className="font-mono text-[14px]" style={{ color: 'var(--text-secondary)' }}>
-                ({oversDisplay(inn.legalBalls)}/{match.oversLimit} ov)
+                ({oversDisplay(inn.legalBalls)}/{match.oversLimit} ov) · CRR {economyRate(inn.runs, inn.legalBalls)}
               </span>
             </div>
             {match.innings.length === 2 && (
               <div className="mt-2 border-t pt-2 text-[12.5px]" style={{ borderColor: 'var(--border-hairline)', color: 'var(--text-secondary)' }}>
                 Target <b style={{ color: 'var(--text-primary)' }}>{target(match)}</b> · need{' '}
-                <b style={{ color: 'var(--text-primary)' }}>{Math.max(0, (target(match) ?? 0) - inn.runs)}</b> off{' '}
-                <b style={{ color: 'var(--text-primary)' }}>{Math.max(0, match.oversLimit * 6 - inn.legalBalls)}</b> balls
+                <b style={{ color: 'var(--text-primary)' }}>{runsNeeded}</b> off{' '}
+                <b style={{ color: 'var(--text-primary)' }}>{ballsRemaining}</b> balls
+                {!inn.complete && (
+                  <>
+                    {' '}
+                    · RRR <b style={{ color: 'var(--text-primary)' }}>{economyRate(runsNeeded, ballsRemaining)}</b>
+                  </>
+                )}
               </div>
             )}
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
+            <div className="mt-3 text-[11.5px]" style={{ color: 'var(--text-muted)' }}>
+              Partnership <b style={{ color: 'var(--text-secondary)' }}>{partnership.runs} ({partnership.balls})</b>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-[13px]">
               <div className="rounded-lg px-2.5 py-2" style={{ background: 'var(--surface-card)' }}>
                 <div style={{ color: 'var(--text-muted)' }}>{playerName(match, inn.strikerId)}*</div>
                 <div className="font-mono font-semibold">
@@ -340,6 +359,9 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
               <p className="mb-2 text-[13.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
                 Over {Math.floor(inn.legalBalls / 6) + 1} — who's bowling?
               </p>
+              <p className="mb-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                Max {bowlerCap} over{bowlerCap === 1 ? '' : 's'} per bowler in a {m.oversLimit}-over innings.
+              </p>
               <NameEntry
                 knownPlayers={bowlerChoices}
                 placeholder="Bowler name"
@@ -348,6 +370,11 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
                   const id = resolveOrCreatePlayer(bowlingTeam, name)
                   if (id === innings.previousBowlerId) {
                     alert("That bowler just finished the previous over — pick someone else.")
+                    return
+                  }
+                  const bowled = Math.floor((innings.bowlers[id]?.legalBalls ?? 0) / 6)
+                  if (bowled >= bowlerCap) {
+                    alert(`${name} has already bowled the maximum ${bowlerCap} over${bowlerCap === 1 ? '' : 's'} allowed.`)
                     return
                   }
                   mutate(() => {
@@ -360,6 +387,14 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
 
           {match.status === 'live' && !inn.complete && !needsNewBowler && (
             <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--surface-card)' }}>
+              {freeHitActive && (
+                <div
+                  className="mb-3 rounded-xl py-2 text-center text-[13px] font-bold uppercase tracking-wide text-white"
+                  style={{ background: 'var(--extra)' }}
+                >
+                  🏏 Free Hit
+                </div>
+              )}
               <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
                 {(['normal', 'wide', 'noball', 'bye', 'legbye', 'wicket'] as BallKind[]).map((k) => (
                   <button
@@ -443,17 +478,24 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
               )}
 
               {wicketStep === 'type' && (
-                <div className="grid grid-cols-2 gap-2">
-                  {DISMISSALS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => pickDismissalType(d)}
-                      className="rounded-xl py-3 text-[13px] font-semibold"
-                      style={{ background: 'var(--wicket-soft)', color: 'var(--wicket)' }}
-                    >
-                      {d}
-                    </button>
-                  ))}
+                <div>
+                  {freeHitActive && (
+                    <p className="mb-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                      Free hit — only a run out can dismiss the batsman this ball.
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {(freeHitActive ? DISMISSALS.filter((d) => d === 'Run Out') : DISMISSALS).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => pickDismissalType(d)}
+                        className="rounded-xl py-3 text-[13px] font-semibold"
+                        style={{ background: 'var(--wicket-soft)', color: 'var(--wicket)' }}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
