@@ -7,9 +7,15 @@ export function Splash({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     announce('Star Kala CC Zindabaad')
+    // Some mobile browsers only reliably allow the first speech of a page
+    // visit from inside an actual tap/click handler — this is a backstop in
+    // case the plain autoplay attempt above got silently blocked.
+    const retryOnFirstTap = () => announce('Star Kala CC Zindabaad')
+    document.addEventListener('pointerdown', retryOnFirstTap, { once: true })
     const t1 = setTimeout(() => setFading(true), 3500)
     const t2 = setTimeout(onDone, 4000)
     return () => {
+      document.removeEventListener('pointerdown', retryOnFirstTap)
       clearTimeout(t1)
       clearTimeout(t2)
     }
