@@ -1,4 +1,4 @@
-# Mission-2
+# Cricket
 
 **[Star Kala CC — Cricket Scorer](cricket/README.md)** — an installable web app
 (PWA) for ball-by-ball cricket scoring, running entirely client-side with no
@@ -15,8 +15,7 @@ and deploys it automatically on every push to this branch. To turn it on:
    **GitHub Actions**.
 2. Go to the **Actions** tab → **Deploy to GitHub Pages** → **Run workflow**
    (or just push a new commit).
-3. The app is served at `<your Pages URL>/cricket/`; visiting the bare Pages
-   URL redirects there automatically.
+3. The app is served directly at your Pages URL (`<your GitHub username>.github.io/<repo name>/`).
 
 ## Installing on your iPhone or Android phone
 

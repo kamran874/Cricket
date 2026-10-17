@@ -27,14 +27,9 @@ jobs:
       - name: Build Cricket Scorer (Star Kala CC)
         working-directory: cricket
         run: npm ci && npm run build
-      - name: Assemble site (redirect at root, app lives at /cricket/)
-        run: |
-          mkdir -p site/cricket
-          cp -r cricket/dist/. site/cricket/
-          cp redirect.html site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: cricket/dist
 
   deploy:
     needs: build
