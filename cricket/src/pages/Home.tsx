@@ -1,9 +1,15 @@
 import { useEffect } from 'react'
 import { useMatches } from '../store'
+import { deleteMatch } from '../lib/matchStore'
 import type { RecentEntry } from '../lib/matchStore'
 
 export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: () => void }) {
   const { recent, refresh } = useMatches()
+  const handleDelete = (entry: RecentEntry) => {
+    if (!confirm(`Delete ${entry.teamA} vs ${entry.teamB}? This can't be undone.`)) return
+    deleteMatch(entry.id)
+    refresh()
+  }
   // Home remounts on every in-app navigation back to it (App.tsx swaps
   // component types), so this catches matches created/updated elsewhere —
   // window 'focus' alone doesn't fire for same-page view switches.
@@ -40,7 +46,7 @@ export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: (
           </h2>
           <div className="mb-5 flex flex-col gap-2">
             {live.map((m) => (
-              <MatchRow key={m.id} entry={m} onOpen={onOpen} />
+              <MatchRow key={m.id} entry={m} onOpen={onOpen} onDelete={handleDelete} />
             ))}
           </div>
         </>
@@ -53,7 +59,7 @@ export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: (
           </h2>
           <div className="mb-5 flex flex-col gap-2">
             {done.map((m) => (
-              <MatchRow key={m.id} entry={m} onOpen={onOpen} />
+              <MatchRow key={m.id} entry={m} onOpen={onOpen} onDelete={handleDelete} />
             ))}
           </div>
         </>
@@ -70,32 +76,50 @@ export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: (
   )
 }
 
-function MatchRow({ entry, onOpen }: { entry: RecentEntry; onOpen: (id: string) => void }) {
+function MatchRow({
+  entry,
+  onOpen,
+  onDelete,
+}: {
+  entry: RecentEntry
+  onOpen: (id: string) => void
+  onDelete: (entry: RecentEntry) => void
+}) {
   return (
-    <button
-      onClick={() => onOpen(entry.id)}
-      className="rounded-2xl p-4 text-left"
-      style={{ background: 'var(--surface-card)', border: '1px solid var(--border-hairline)' }}
-    >
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-[14.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
-          {entry.teamA} vs {entry.teamB}
-        </span>
-        <span
-          className="rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase"
-          style={{
-            background: entry.status === 'live' ? 'var(--pitch)' : 'var(--border-hairline)',
-            color: entry.status === 'live' ? 'var(--pitch-ink)' : 'var(--text-secondary)',
-          }}
-        >
-          {entry.status === 'live' ? 'Live' : 'Final'}
-        </span>
-      </div>
-      {entry.result && (
-        <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-          {entry.result}
+    <div className="flex items-stretch gap-2">
+      <button
+        onClick={() => onOpen(entry.id)}
+        className="flex-1 rounded-2xl p-4 text-left"
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--border-hairline)' }}
+      >
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-[14.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {entry.teamA} vs {entry.teamB}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase"
+            style={{
+              background: entry.status === 'live' ? 'var(--pitch)' : 'var(--border-hairline)',
+              color: entry.status === 'live' ? 'var(--pitch-ink)' : 'var(--text-secondary)',
+            }}
+          >
+            {entry.status === 'live' ? 'Live' : 'Final'}
+          </span>
         </div>
-      )}
-    </button>
+        {entry.result && (
+          <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
+            {entry.result}
+          </div>
+        )}
+      </button>
+      <button
+        onClick={() => onDelete(entry)}
+        className="rounded-2xl px-3.5 text-[16px]"
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--border-hairline)', color: 'var(--wicket)' }}
+        aria-label={`Delete ${entry.teamA} vs ${entry.teamB}`}
+      >
+        🗑
+      </button>
+    </div>
   )
 }

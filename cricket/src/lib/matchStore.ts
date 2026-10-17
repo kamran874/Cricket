@@ -73,6 +73,13 @@ export function writeMatch(match: Match) {
   window.dispatchEvent(new CustomEvent(LOCAL_EVENT, { detail: match.id }))
 }
 
+/** Permanently removes a match and its recent-list entry from this device. */
+export function deleteMatch(id: string) {
+  localStorage.removeItem(localKey(id))
+  removeFromRecent(id)
+  window.dispatchEvent(new CustomEvent(LOCAL_EVENT, { detail: id }))
+}
+
 /** `cb` fires immediately with the current value, then again whenever this
  *  match is written — from this tab (custom event) or another tab/window on
  *  the same device (the native `storage` event). Everything here is plain

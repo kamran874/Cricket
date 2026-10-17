@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { BallKind, DismissalType, Match } from '../types'
-import { watchMatch, writeMatch } from '../lib/matchStore'
+import { deleteMatch, watchMatch, writeMatch } from '../lib/matchStore'
+import { announce, describeNonWicketBall, describeWicket, isVoiceEnabled, setVoiceEnabled } from '../lib/speech'
 import { NameEntry } from '../components/NameEntry'
 import {
   addBall,
@@ -61,6 +62,13 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
   const [pendingRuns, setPendingRuns] = useState(0)
   const [pendingFielderId, setPendingFielderId] = useState<string | undefined>(undefined)
   const [confirmEnd, setConfirmEnd] = useState(false)
+  const [voiceOn, setVoiceOn] = useState(isVoiceEnabled())
+
+  const toggleVoice = () => {
+    const next = !voiceOn
+    setVoiceOn(next)
+    setVoiceEnabled(next)
+  }
 
   const inn = match ? currentInnings(match) : null
   const maxWickets = match ? match.playersPerSide - 1 : 10
@@ -133,6 +141,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
       })
       addBall(innings, ball, m.oversLimit, maxWickets)
     })
+    announce(describeWicket(type))
     resetWicketWizard()
   }
 
@@ -178,6 +187,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
       })
       addBall(innings, ball, m.oversLimit, maxWickets)
     })
+    announce(describeNonWicketBall(kind, batRuns, extraRuns, byeRuns))
     setMode('normal')
   }
 
@@ -212,7 +222,29 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
           {match.teamA.name} vs {match.teamB.name}
         </span>
-        <span style={{ width: 20 }} aria-hidden="true" />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleVoice}
+            className="text-[17px]"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label={voiceOn ? 'Mute ball-by-ball voice announcements' : 'Unmute ball-by-ball voice announcements'}
+          >
+            {voiceOn ? '🔊' : '🔇'}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Delete ${match.teamA.name} vs ${match.teamB.name}? This can't be undone.`)) {
+                deleteMatch(match.id)
+                onBack()
+              }
+            }}
+            className="text-[17px]"
+            style={{ color: 'var(--wicket)' }}
+            aria-label="Delete match"
+          >
+            🗑
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 flex rounded-xl p-1" style={{ background: 'var(--surface-card)' }}>
