@@ -12,6 +12,7 @@
 
   --pitch: #1f6b45;
   --pitch-ink: #ffffff;
+  --pitch-glow: rgba(31, 107, 69, 0.1);
   --wicket: #a8222c;
   --wicket-soft: #f3dcdd;
   --extra: #b8860b;
@@ -34,6 +35,7 @@
 
     --pitch: #3fa06a;
     --pitch-ink: #07140d;
+    --pitch-glow: rgba(63, 160, 106, 0.16);
     --wicket: #e2626b;
     --wicket-soft: #3a1c1f;
     --extra: #d9ac3f;
@@ -53,6 +55,7 @@
 
   --pitch: #3fa06a;
   --pitch-ink: #07140d;
+  --pitch-glow: rgba(63, 160, 106, 0.16);
   --wicket: #e2626b;
   --wicket-soft: #3a1c1f;
   --extra: #d9ac3f;
@@ -78,4 +81,17 @@ button, input, select {
 }
 ::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(6px, -22px) rotate(10deg); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-8px, 16px) rotate(-8deg); }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(10px, 10px) rotate(6deg); }
 }

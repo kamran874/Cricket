@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import teamPhoto from '../assets/team-photo.jpg'
+import { CricketMotifs } from '../components/CricketMotifs'
 
 export function Splash({ onDone }: { onDone: () => void }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    const t1 = setTimeout(() => setFading(true), 2900)
-    const t2 = setTimeout(onDone, 3300)
+    const t1 = setTimeout(() => setFading(true), 3500)
+    const t2 = setTimeout(onDone, 4000)
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
@@ -33,29 +33,20 @@ export function Splash({ onDone }: { onDone: () => void }) {
         <ellipse cx="200" cy="760" rx="360" ry="210" fill="none" stroke="#f3ead3" strokeOpacity="0.12" strokeWidth="2" />
       </svg>
 
-      <div className="relative z-10 flex h-full w-full flex-col items-center px-8" style={{ paddingTop: '13vh' }}>
-        <div
-          className="overflow-hidden rounded-[28px]"
-          style={{
-            width: 'min(62vw, 260px)',
-            aspectRatio: '1 / 1',
-            border: '3px solid #f3ead3',
-            boxShadow: '0 18px 40px -12px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)',
-          }}
-        >
-          <img src={teamPhoto} alt="Star Kala CC" className="h-full w-full object-cover" style={{ objectPosition: '50% 30%' }} />
-        </div>
+      <CricketMotifs opacity={0.6} wicketColor="#f3ead3" />
 
-        <div className="mt-8 h-[2px] w-10 rounded-full" style={{ background: '#a8222c' }} />
+      <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-8">
+        <div className="h-[2px] w-10 rounded-full" style={{ background: '#a8222c' }} />
         <span className="mt-4 text-[12px] font-semibold uppercase tracking-[0.3em]" style={{ color: '#f3ead3b3' }}>
           Cricket Scorer
         </span>
         <h1
-          className="mt-1 text-center text-[38px] font-bold leading-tight"
+          className="mt-1 text-center text-[44px] font-bold leading-tight"
           style={{ fontFamily: "'Oswald', system-ui, sans-serif", color: '#f8faf4' }}
         >
           Star Kala CC
         </h1>
+        <div className="mt-6 h-[2px] w-10 rounded-full" style={{ background: '#a8222c' }} />
       </div>
     </div>
   )

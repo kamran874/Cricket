@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MatchesProvider } from './store'
+import { CricketBackdrop } from './components/CricketBackdrop'
 import { Splash } from './pages/Splash'
 import { Home } from './pages/Home'
 import { Setup } from './pages/Setup'
@@ -33,7 +34,8 @@ function Shell() {
 function App() {
   return (
     <MatchesProvider>
-      <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
+      <CricketBackdrop />
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
         <Shell />
       </div>
     </MatchesProvider>
