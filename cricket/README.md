@@ -16,6 +16,61 @@ credit rules, and undo are all covered. Run it with:
 node --experimental-strip-types src/lib/engine.test.ts
 ```
 
+## Live shared scoring (share a match link)
+
+When you start a match, the app gives it a link (tap the 🔗 icon on the
+scoring screen, or it's copied automatically). Send that link to anyone —
+whoever opens it, on any browser, on iOS or Android, sees the same match
+update **live** as you score it, and can export a copy to their own device at
+any point. No login, no app install required on their end.
+
+This needs a free Firestore database behind the static site (GitHub Pages
+only serves files, it can't hold shared live state on its own). **Without
+this setup, the app still works perfectly** — it just falls back to
+local-only mode, where each device has to score its own separate match and a
+shared link won't sync between devices. You'll see a banner in the app
+saying which mode you're in.
+
+### One-time setup (~10 minutes)
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) and sign in with any Google account.
+2. **Add project** → give it any name (e.g. "star-kala-gujran") → you can
+   decline Google Analytics, it's not needed → **Create project**.
+3. In the left sidebar: **Build → Firestore Database → Create database**.
+   Choose any region close to you, and start in **production mode**.
+4. Still in Firestore, open the **Rules** tab and replace the contents with:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /matches/{matchId} {
+         allow get, write: if true;
+         allow list: if false;
+       }
+     }
+   }
+   ```
+
+   This means: anyone who has a specific match's exact link can read and
+   score it (no login needed), but nobody can browse or discover the full
+   list of matches — a match is only reachable if you were sent its link.
+   That's the whole security model: an unguessable link, like a Google Meet
+   or Zoom link, rather than usernames and passwords. Click **Publish**.
+5. Back at the project overview (gear icon → **Project settings**), scroll to
+   **Your apps** → click the **</>** (web) icon → register an app (any
+   nickname, no need for Firebase Hosting) → it shows a `firebaseConfig`
+   object.
+6. Copy those values into [`src/lib/firebaseConfig.ts`](src/lib/firebaseConfig.ts)
+   in place of the `'REPLACE_ME'` placeholders, then rebuild and redeploy
+   (`npm run build`, or just push — the GitHub Actions workflow rebuilds
+   automatically). That's it — the banner disappears and every match gets a
+   real shareable link from then on.
+
+These config values are meant to be public (they identify your project, not
+a secret) — the Rules above are what actually controls access, not keeping
+this file hidden.
+
 ## Running locally
 
 ```bash

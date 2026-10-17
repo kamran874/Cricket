@@ -1,38 +1,46 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { Match } from './types'
-import * as storage from './lib/storage'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { getRecent, removeFromRecent, type RecentEntry } from './lib/matchStore'
 
-interface MatchesContextValue {
-  matches: Match[]
-  saveMatch: (m: Match) => void
-  removeMatch: (id: string) => void
+interface RecentContextValue {
+  recent: RecentEntry[]
   refresh: () => void
+  remove: (id: string) => void
 }
 
-const MatchesContext = createContext<MatchesContextValue | null>(null)
+const RecentContext = createContext<RecentContextValue | null>(null)
 
 export function MatchesProvider({ children }: { children: ReactNode }) {
-  const [matches, setMatches] = useState<Match[]>(() => storage.getMatches())
+  const [recent, setRecent] = useState<RecentEntry[]>(() => getRecent())
 
-  const refresh = useCallback(() => setMatches(storage.getMatches()), [])
+  const refresh = useCallback(() => setRecent(getRecent()), [])
 
-  const saveMatch = useCallback((m: Match) => {
-    storage.upsertMatch(m)
-    setMatches(storage.getMatches())
-  }, [])
+  useEffect(() => {
+    // another tab's write, or this tab writing a match, updates the cache —
+    // poll on focus/visibility is enough for a "recent matches" convenience list
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [refresh])
 
-  const removeMatch = useCallback((id: string) => {
-    storage.deleteMatch(id)
-    setMatches(storage.getMatches())
-  }, [])
+  const remove = useCallback(
+    (id: string) => {
+      removeFromRecent(id)
+      refresh()
+    },
+    [refresh],
+  )
 
-  const value = useMemo(() => ({ matches, saveMatch, removeMatch, refresh }), [matches, saveMatch, removeMatch, refresh])
+  const value = useMemo(() => ({ recent, refresh, remove }), [recent, refresh, remove])
 
-  return <MatchesContext.Provider value={value}>{children}</MatchesContext.Provider>
+  return <RecentContext.Provider value={value}>{children}</RecentContext.Provider>
 }
 
-export function useMatches(): MatchesContextValue {
-  const ctx = useContext(MatchesContext)
+export function useMatches(): RecentContextValue {
+  const ctx = useContext(RecentContext)
   if (!ctx) throw new Error('useMatches must be used within MatchesProvider')
   return ctx
 }

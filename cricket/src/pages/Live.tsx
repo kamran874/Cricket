@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { BallKind, DismissalType, Match } from '../types'
-import { useMatches } from '../store'
+import { isFirebaseConfigured, watchMatch, writeMatch } from '../lib/matchStore'
 import { NameEntry } from '../components/NameEntry'
 import {
   addBall,
@@ -47,8 +47,12 @@ type WicketStep = 'type' | 'runout-who' | 'fielder' | 'incoming' | null
  *  other dismissal type scores 0 runs off that ball. */
 
 export function Live({ matchId, onBack }: { matchId: string; onBack: () => void }) {
-  const { matches, saveMatch } = useMatches()
-  const match = matches.find((m) => m.id === matchId)
+  const [match, setMatch] = useState<Match | null | undefined>(undefined) // undefined = still loading
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    setMatch(undefined)
+    return watchMatch(matchId, setMatch)
+  }, [matchId])
   const [tab, setTab] = useState<'score' | 'scorecard'>('score')
   const [mode, setMode] = useState<BallKind>('normal')
   const [wicketStep, setWicketStep] = useState<WicketStep>(null)
@@ -61,10 +65,21 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
   const inn = match ? currentInnings(match) : null
   const maxWickets = match ? match.playersPerSide - 1 : 10
 
+  if (match === undefined) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+        Loading match…
+      </div>
+    )
+  }
+
   if (!match || !inn) {
     return (
       <div className="mx-auto max-w-md px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-        Match not found.
+        <p className="mb-4">This match link doesn't point to anything (yet, or anymore).</p>
+        <button onClick={onBack} className="text-[14px] font-semibold" style={{ color: 'var(--pitch)' }}>
+          ← Back home
+        </button>
       </div>
     )
   }
@@ -77,7 +92,9 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
   const innings = inn
 
   const persist = () => {
-    saveMatch({ ...m, updatedAt: Date.now() })
+    const updated = { ...m, updatedAt: Date.now() }
+    setMatch(updated)
+    writeMatch(updated)
   }
 
   const mutate = (fn: () => void) => {
@@ -195,8 +212,31 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
           {match.teamA.name} vs {match.teamB.name}
         </span>
-        <span style={{ width: 20 }} />
+        <button
+          onClick={async () => {
+            const url = `${location.origin}${location.pathname}#${match.id}`
+            try {
+              await navigator.clipboard.writeText(url)
+            } catch {
+              prompt('Copy this link:', url)
+              return
+            }
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1800)
+          }}
+          className="text-[18px]"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-label="Share match link"
+        >
+          {copied ? '✓' : '🔗'}
+        </button>
       </div>
+
+      {!isFirebaseConfigured() && (
+        <p className="mb-3 text-[11.5px]" style={{ color: 'var(--text-muted)' }}>
+          Local-only mode: this link only works on this device until Firebase is set up (see README).
+        </p>
+      )}
 
       <div className="mb-4 flex rounded-xl p-1" style={{ background: 'var(--surface-card)' }}>
         {(['score', 'scorecard'] as const).map((t) => (
@@ -483,7 +523,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
           )}
 
           {match.status === 'live' && inn.complete && match.innings.length === 1 && (
-            <SecondInningsPrompt match={match} saveMatch={saveMatch} />
+            <SecondInningsPrompt match={match} />
           )}
 
           {match.status === 'live' && inn.complete && match.innings.length === 2 && (
@@ -549,7 +589,7 @@ function BallChip({ kind, totalRuns, wicket }: { kind: BallKind; totalRuns: numb
   )
 }
 
-function SecondInningsPrompt({ match, saveMatch }: { match: Match; saveMatch: (m: Match) => void }) {
+function SecondInningsPrompt({ match }: { match: Match }) {
   const bowlingKey = match.battingFirst === 'A' ? 'B' : 'A'
   const battingKey = match.battingFirst
   const nextBattingXI = team(match, bowlingKey).players // team that bowled first now bats
@@ -559,7 +599,7 @@ function SecondInningsPrompt({ match, saveMatch }: { match: Match; saveMatch: (m
 
   function start(bowlerName: string) {
     startSecondInnings(match, strikerName, nonStrikerName, bowlerName)
-    saveMatch({ ...match, updatedAt: Date.now() })
+    writeMatch({ ...match, updatedAt: Date.now() })
   }
 
   return (

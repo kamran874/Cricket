@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import type { TeamKey } from '../types'
 import { createMatch } from '../lib/match'
-import { useMatches } from '../store'
+import { writeMatch } from '../lib/matchStore'
 
 const inputClass = 'w-full rounded-xl px-3 py-2.5 text-[15px] outline-none'
 const inputStyle = { background: 'var(--surface-card)', color: 'var(--text-primary)', border: '1px solid var(--border-hairline)' }
 
 export function Setup({ onStarted, onCancel }: { onStarted: (matchId: string) => void; onCancel: () => void }) {
-  const { saveMatch } = useMatches()
   const [step, setStep] = useState(1)
 
   const [teamAName, setTeamAName] = useState('')
@@ -37,7 +36,7 @@ export function Setup({ onStarted, onCancel }: { onStarted: (matchId: string) =>
       openingNonStrikerName: nonStrikerName,
       openingBowlerName: bowlerName,
     })
-    saveMatch(match)
+    writeMatch(match)
     onStarted(match.id)
   }
 
