@@ -89,7 +89,7 @@ function runsRunBetweenWickets(ball: BallEvent): number {
   return 0
 }
 
-export function addBall(innings: Innings, ball: BallEvent, oversLimit: number, maxWickets: number) {
+export function addBall(innings: Innings, ball: BallEvent, oversLimit: number, maxWickets: number, target?: number) {
   const overIdx = ball.overNumber
   while (innings.overs.length <= overIdx) innings.overs.push([])
   innings.overs[overIdx].push(ball)
@@ -117,7 +117,10 @@ export function addBall(innings: Innings, ball: BallEvent, oversLimit: number, m
 
   recomputeInnings(innings)
   innings.complete =
-    innings.legalBalls >= oversLimit * 6 || innings.wickets >= maxWickets || innings.complete
+    innings.legalBalls >= oversLimit * 6 ||
+    innings.wickets >= maxWickets ||
+    (target !== undefined && innings.runs >= target) ||
+    innings.complete
 }
 
 export function undoLastBall(innings: Innings): boolean {

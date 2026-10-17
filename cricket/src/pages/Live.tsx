@@ -146,7 +146,8 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         bowlerId: innings.currentBowlerId,
         overNumber: currentOverIndex(innings),
       })
-      addBall(innings, ball, m.oversLimit, maxWickets)
+      addBall(innings, ball, m.oversLimit, maxWickets, target(m) ?? undefined)
+      if (m.innings.length === 2 && innings.complete) finishMatch(m)
     })
     announce(describeWicket(type))
     resetWicketWizard()
@@ -192,7 +193,10 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         bowlerId: innings.currentBowlerId,
         overNumber: currentOverIndex(innings),
       })
-      addBall(innings, ball, m.oversLimit, maxWickets)
+      addBall(innings, ball, m.oversLimit, maxWickets, target(m) ?? undefined)
+      // A chase ends the instant the target is passed, even mid-over — don't
+      // wait for the over or innings to run its course.
+      if (m.innings.length === 2 && innings.complete) finishMatch(m)
     })
     announce(describeNonWicketBall(kind, batRuns, extraRuns, byeRuns))
     setMode('normal')

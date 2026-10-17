@@ -145,5 +145,25 @@ const sub1 = 'sub1'
   assertEq(inn.complete, true, 'innings marked complete at the overs limit')
 }
 
+// ---- A chase ends the instant the target is passed, mid-over, not at over/innings end ----
+{
+  const inn = newInnings('B', S, N, B1)
+  const target = 23 // chasing a first-innings score of 22
+  addBall(inn, makeBall('normal', { batRuns: 4, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10, target)
+  assertEq(inn.complete, false, 'not complete yet: 4 runs, nowhere near the target')
+
+  for (let i = 0; i < 4; i++) {
+    addBall(inn, makeBall('normal', { batRuns: 4, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10, target)
+  }
+  // 5 fours = 20 runs, still short of the 23 target, and only the 5th ball of the over
+  assertEq(inn.runs, 20, 'score after five fours')
+  assertEq(inn.complete, false, 'still not complete: target not yet reached')
+
+  addBall(inn, makeBall('normal', { batRuns: 4, strikerId: inn.strikerId, nonStrikerId: inn.nonStrikerId, bowlerId: B1, overNumber: currentOverIndex(inn) }), 20, 10, target)
+  // the 6th ball's four takes the score to 24, past the 23 target, mid-over (only 6 of 120 legal balls bowled)
+  assertEq(inn.runs, 24, 'score after the chase-winning four')
+  assertEq(inn.complete, true, 'innings ends immediately once the target is passed, even mid-over with 19 overs still unbowled')
+}
+
 console.log(failures === 0 ? '\nALL ASSERTIONS PASSED' : `\n${failures} ASSERTION(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
