@@ -107,6 +107,10 @@ export interface Match {
   teamA: TeamSetup
   teamB: TeamSetup
   oversLimit: number
+  /** Used only for the all-out threshold (maxWickets = playersPerSide - 1) —
+   *  individual players are named on the fly as they come up, not entered
+   *  as a roster upfront. */
+  playersPerSide: number
   tossWinner: TeamKey
   tossDecision: 'bat' | 'bowl'
   battingFirst: TeamKey

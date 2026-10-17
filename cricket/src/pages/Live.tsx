@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { BallKind, DismissalType, Match } from '../types'
 import { useMatches } from '../store'
+import { NameEntry } from '../components/NameEntry'
 import {
   addBall,
   currentOverIndex,
@@ -22,6 +23,7 @@ import {
   finishMatch,
   playerName,
   remainingBatsmen,
+  resolveOrCreatePlayer,
   startSecondInnings,
   target,
   team,
@@ -57,11 +59,7 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
   const [confirmEnd, setConfirmEnd] = useState(false)
 
   const inn = match ? currentInnings(match) : null
-
-  const maxWickets = useMemo(() => {
-    if (!match || !inn) return 10
-    return team(match, inn.battingTeam).players.length - 1
-  }, [match, inn])
+  const maxWickets = match ? match.playersPerSide - 1 : 10
 
   if (!match || !inn) {
     return (
@@ -282,18 +280,16 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
               <p className="mb-2 text-[13.5px] font-semibold" style={{ color: 'var(--text-primary)' }}>
                 Over {Math.floor(inn.legalBalls / 6) + 1} — who's bowling?
               </p>
-              <div className="flex flex-wrap gap-2">
-                {bowlerChoices.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => mutate(() => (inn.currentBowlerId = p.id))}
-                    className="rounded-full px-3.5 py-2 text-[13px] font-semibold"
-                    style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-hairline)' }}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
+              <NameEntry
+                knownPlayers={bowlerChoices}
+                placeholder="Bowler name"
+                onSubmit={(name) =>
+                  mutate(() => {
+                    const bowlingTeam = team(m, bowlingTeamKey(m, innings))
+                    innings.currentBowlerId = resolveOrCreatePlayer(bowlingTeam, name)
+                  })
+                }
+              />
             </div>
           )}
 
@@ -445,26 +441,21 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
 
               {wicketStep === 'fielder' && (
                 <div>
-                  <p className="mb-2 text-[13.5px] font-semibold">Fielder (optional)</p>
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {fielders.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => setPendingFielderId(p.id === pendingFielderId ? undefined : p.id)}
-                        className="rounded-full px-3 py-1.5 text-[12.5px] font-semibold"
-                        style={{
-                          background: pendingFielderId === p.id ? 'var(--text-primary)' : 'var(--surface-raised)',
-                          color: pendingFielderId === p.id ? 'var(--surface-card)' : 'var(--text-secondary)',
-                          border: '1px solid var(--border-hairline)',
-                        }}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="mb-2 text-[13.5px] font-semibold">
+                    Fielder {pendingFielderId ? `— ${playerName(m, pendingFielderId)}` : '(optional)'}
+                  </p>
+                  <NameEntry
+                    knownPlayers={fielders}
+                    placeholder="Fielder name"
+                    buttonLabel="Set"
+                    onSubmit={(name) => {
+                      const fieldingTeam = team(m, bowlingTeamKey(m, innings))
+                      setPendingFielderId(resolveOrCreatePlayer(fieldingTeam, name))
+                    }}
+                  />
                   <button
                     onClick={() => pendingType && pendingOutId && decideNext(pendingType, pendingOutId, pendingRuns, pendingFielderId)}
-                    className="w-full rounded-xl py-2.5 text-[14px] font-semibold text-white"
+                    className="mt-3 w-full rounded-xl py-2.5 text-[14px] font-semibold text-white"
                     style={{ background: 'var(--wicket)' }}
                   >
                     Confirm wicket
@@ -475,18 +466,17 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
               {wicketStep === 'incoming' && (
                 <div>
                   <p className="mb-2 text-[13.5px] font-semibold">Next batsman in</p>
-                  <div className="flex flex-wrap gap-2">
-                    {remaining.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => pendingType && pendingOutId && commitWicketFinal(pendingType, pendingOutId, pendingRuns, pendingFielderId, p.id)}
-                        className="rounded-full px-3.5 py-2 text-[13px] font-semibold"
-                        style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-hairline)' }}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
+                  <NameEntry
+                    knownPlayers={remaining}
+                    placeholder="Batsman name"
+                    buttonLabel="In"
+                    onSubmit={(name) => {
+                      if (!pendingType || !pendingOutId) return
+                      const battingTeam = team(m, innings.battingTeam)
+                      const incomingId = resolveOrCreatePlayer(battingTeam, name)
+                      commitWicketFinal(pendingType, pendingOutId, pendingRuns, pendingFielderId, incomingId)
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -564,50 +554,45 @@ function SecondInningsPrompt({ match, saveMatch }: { match: Match; saveMatch: (m
   const battingKey = match.battingFirst
   const nextBattingXI = team(match, bowlingKey).players // team that bowled first now bats
   const nextBowlingXI = team(match, battingKey).players
-  const [strikerId, setStrikerId] = useState('')
-  const [nonStrikerId, setNonStrikerId] = useState('')
-  const [bowlerId, setBowlerId] = useState('')
+  const [strikerName, setStrikerName] = useState('')
+  const [nonStrikerName, setNonStrikerName] = useState('')
+
+  function start(bowlerName: string) {
+    startSecondInnings(match, strikerName, nonStrikerName, bowlerName)
+    saveMatch({ ...match, updatedAt: Date.now() })
+  }
 
   return (
     <div className="rounded-2xl p-4" style={{ background: 'var(--surface-card)' }}>
       <p className="mb-3 text-[14px] font-semibold">
         {team(match, bowlingKey).name} innings complete. Set up the 2nd innings — {team(match, bowlingKey).name} bat.
       </p>
-      <select value={strikerId} onChange={(e) => setStrikerId(e.target.value)} className="mb-2 w-full rounded-xl px-3 py-2 text-[14px]" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-hairline)' }}>
-        <option value="">Striker</option>
-        {nextBattingXI.map((p) => (
-          <option key={p.id} value={p.id} disabled={p.id === nonStrikerId}>
-            {p.name}
-          </option>
-        ))}
-      </select>
-      <select value={nonStrikerId} onChange={(e) => setNonStrikerId(e.target.value)} className="mb-2 w-full rounded-xl px-3 py-2 text-[14px]" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-hairline)' }}>
-        <option value="">Non-striker</option>
-        {nextBattingXI.map((p) => (
-          <option key={p.id} value={p.id} disabled={p.id === strikerId}>
-            {p.name}
-          </option>
-        ))}
-      </select>
-      <select value={bowlerId} onChange={(e) => setBowlerId(e.target.value)} className="mb-3 w-full rounded-xl px-3 py-2 text-[14px]" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-hairline)' }}>
-        <option value="">Opening bowler</option>
-        {nextBowlingXI.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
-      <button
-        disabled={!strikerId || !nonStrikerId || strikerId === nonStrikerId || !bowlerId}
-        onClick={() => {
-          startSecondInnings(match, strikerId, nonStrikerId, bowlerId)
-          saveMatch({ ...match, updatedAt: Date.now() })
-        }}
-        className="w-full rounded-xl py-2.5 text-[14px] font-semibold text-white disabled:opacity-40"
-        style={{ background: 'var(--pitch)' }}
-      >
-        Start 2nd innings
-      </button>
+      {!strikerName ? (
+        <>
+          <p className="mb-1.5 text-[12.5px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Striker
+          </p>
+          <NameEntry knownPlayers={nextBattingXI} placeholder="Striker name" onSubmit={setStrikerName} />
+        </>
+      ) : !nonStrikerName ? (
+        <>
+          <p className="mb-1.5 text-[12.5px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Striker: <b>{strikerName}</b> · Non-striker
+          </p>
+          <NameEntry
+            knownPlayers={nextBattingXI.filter((p) => p.name !== strikerName)}
+            placeholder="Non-striker name"
+            onSubmit={setNonStrikerName}
+          />
+        </>
+      ) : (
+        <>
+          <p className="mb-1.5 text-[12.5px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+            {strikerName} &amp; {nonStrikerName} opening · Opening bowler
+          </p>
+          <NameEntry knownPlayers={nextBowlingXI} placeholder="Bowler name" buttonLabel="Start" onSubmit={start} />
+        </>
+      )}
     </div>
   )
 }

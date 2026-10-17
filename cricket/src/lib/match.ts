@@ -23,36 +23,62 @@ export function bowlingTeamKey(_match: Match, innings: Innings): TeamKey {
   return opposingKey(innings.battingTeam)
 }
 
+/** Finds a player by name (case-insensitive) on `team`, or creates one —
+ *  the single source of truth for turning a typed/tapped name into a stable
+ *  player id, so the same person's stats always accumulate under one id. */
+export function resolveOrCreatePlayer(team: TeamSetup, rawName: string): string {
+  const name = rawName.trim()
+  const existing = team.players.find((p) => p.name.toLowerCase() === name.toLowerCase())
+  if (existing) return existing.id
+  const id = crypto.randomUUID()
+  team.players.push({ id, name })
+  return id
+}
+
 export function createMatch(input: {
-  teamA: TeamSetup
-  teamB: TeamSetup
+  teamAName: string
+  teamBName: string
   oversLimit: number
+  playersPerSide: number
   tossWinner: TeamKey
   tossDecision: 'bat' | 'bowl'
-  openingStrikerId: string
-  openingNonStrikerId: string
-  openingBowlerId: string
+  openingStrikerName: string
+  openingNonStrikerName: string
+  openingBowlerName: string
 }): Match {
   const battingFirst = input.tossDecision === 'bat' ? input.tossWinner : opposingKey(input.tossWinner)
+  const teamA: TeamSetup = { name: input.teamAName, players: [] }
+  const teamB: TeamSetup = { name: input.teamBName, players: [] }
+  const battingTeam = battingFirst === 'A' ? teamA : teamB
+  const bowlingTeam = battingFirst === 'A' ? teamB : teamA
+  const strikerId = resolveOrCreatePlayer(battingTeam, input.openingStrikerName)
+  const nonStrikerId = resolveOrCreatePlayer(battingTeam, input.openingNonStrikerName)
+  const bowlerId = resolveOrCreatePlayer(bowlingTeam, input.openingBowlerName)
   return {
     id: crypto.randomUUID(),
-    teamA: input.teamA,
-    teamB: input.teamB,
+    teamA,
+    teamB,
     oversLimit: input.oversLimit,
+    playersPerSide: input.playersPerSide,
     tossWinner: input.tossWinner,
     tossDecision: input.tossDecision,
     battingFirst,
     status: 'live',
     result: null,
-    innings: [newInnings(battingFirst, input.openingStrikerId, input.openingNonStrikerId, input.openingBowlerId)],
+    innings: [newInnings(battingFirst, strikerId, nonStrikerId, bowlerId)],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
 }
 
-export function startSecondInnings(match: Match, openingStrikerId: string, openingNonStrikerId: string, openingBowlerId: string) {
-  const battingTeam = opposingKey(match.battingFirst)
-  match.innings.push(newInnings(battingTeam, openingStrikerId, openingNonStrikerId, openingBowlerId))
+export function startSecondInnings(match: Match, strikerName: string, nonStrikerName: string, bowlerName: string) {
+  const battingKey = opposingKey(match.battingFirst)
+  const battingTeam = team(match, battingKey)
+  const bowlingTeam = team(match, opposingKey(battingKey))
+  const strikerId = resolveOrCreatePlayer(battingTeam, strikerName)
+  const nonStrikerId = resolveOrCreatePlayer(battingTeam, nonStrikerName)
+  const bowlerId = resolveOrCreatePlayer(bowlingTeam, bowlerName)
+  match.innings.push(newInnings(battingKey, strikerId, nonStrikerId, bowlerId))
 }
 
 export function target(match: Match): number | null {
@@ -67,7 +93,7 @@ export function finishMatch(match: Match) {
   const t2 = team(match, i2.battingTeam)
   let result: string
   if (i2.runs > i1.runs) {
-    const maxWickets = team(match, i2.battingTeam).players.length - 1
+    const maxWickets = match.playersPerSide - 1
     const wicketsLeft = maxWickets - i2.wickets
     result = `${t2.name} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? '' : 's'}`
   } else if (i1.runs > i2.runs) {

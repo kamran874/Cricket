@@ -1,10 +1,12 @@
 # Star Kala Gujran — Cricket Scorer
 
-Ball-by-ball cricket scoring for weekly matches: team setup, toss, full playing
-XIs, every delivery (runs, wides, no-balls, byes, leg-byes, all wicket types
-with fielder and incoming-batsman prompts), live batting/bowling cards, and
-full-scorecard export (CSV and JSON) at any point in the match. All data is
-stored locally on-device (`localStorage`) — nothing is sent to a server.
+Ball-by-ball cricket scoring for weekly matches: quick team/overs/toss setup,
+then just name each batsman and bowler as they come up — no need to enter a
+full playing XI upfront. Every delivery type (runs, wides, no-balls, byes,
+leg-byes, all wicket types with fielder and incoming-batsman prompts), live
+batting/bowling cards, and full-scorecard export (CSV and JSON) at any point
+in the match. All data is stored locally on-device (`localStorage`) — nothing
+is sent to a server.
 
 The scoring engine (`src/lib/engine.ts`) is pure and unit-tested
 (`src/lib/engine.test.ts`) — strike rotation, over boundaries, maidens, bowler
