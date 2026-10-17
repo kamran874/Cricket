@@ -6,7 +6,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    announce('Star Kala CC Zindabad')
+    announce('Star Kala CC Zindabaad')
     const t1 = setTimeout(() => setFading(true), 3500)
     const t2 = setTimeout(onDone, 4000)
     return () => {
