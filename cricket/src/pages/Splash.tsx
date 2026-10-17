@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { CricketMotifs } from '../components/CricketMotifs'
+import { announce } from '../lib/speech'
 
 export function Splash({ onDone }: { onDone: () => void }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
+    announce('Star Kala CC Zindabad')
     const t1 = setTimeout(() => setFading(true), 3500)
     const t2 = setTimeout(onDone, 4000)
     return () => {
