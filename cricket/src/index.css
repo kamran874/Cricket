@@ -12,7 +12,7 @@
 
   --pitch: #1f6b45;
   --pitch-ink: #ffffff;
-  --pitch-glow: rgba(31, 107, 69, 0.1);
+  --pitch-glow: rgba(31, 107, 69, 0.26);
   --wicket: #a8222c;
   --wicket-soft: #f3dcdd;
   --extra: #b8860b;
@@ -35,7 +35,7 @@
 
     --pitch: #3fa06a;
     --pitch-ink: #07140d;
-    --pitch-glow: rgba(63, 160, 106, 0.16);
+    --pitch-glow: rgba(63, 160, 106, 0.34);
     --wicket: #e2626b;
     --wicket-soft: #3a1c1f;
     --extra: #d9ac3f;
@@ -55,7 +55,7 @@
 
   --pitch: #3fa06a;
   --pitch-ink: #07140d;
-  --pitch-glow: rgba(63, 160, 106, 0.16);
+  --pitch-glow: rgba(63, 160, 106, 0.34);
   --wicket: #e2626b;
   --wicket-soft: #3a1c1f;
   --extra: #d9ac3f;
