@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useMatches } from '../store'
-import { isFirebaseConfigured } from '../lib/matchStore'
 import type { RecentEntry } from '../lib/matchStore'
 
 export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: () => void }) {
@@ -25,13 +24,6 @@ export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: (
       <h1 className="mb-3 text-[26px] font-bold" style={{ fontFamily: "'Oswald'", color: 'var(--text-primary)' }}>
         Matches
       </h1>
-
-      {!isFirebaseConfigured() && (
-        <div className="mb-5 rounded-xl p-3 text-[12.5px]" style={{ background: 'var(--extra-soft)', color: 'var(--extra)' }}>
-          Running in local-only mode — matches stay on this device. Set up Firebase (see README) to get shareable
-          live-scoring links.
-        </div>
-      )}
 
       {recent.length === 0 && (
         <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--surface-card)' }}>

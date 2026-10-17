@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { BallKind, DismissalType, Match } from '../types'
-import { isFirebaseConfigured, watchMatch, writeMatch } from '../lib/matchStore'
+import { watchMatch, writeMatch } from '../lib/matchStore'
 import { NameEntry } from '../components/NameEntry'
 import {
   addBall,
@@ -28,6 +28,7 @@ import {
   target,
   team,
 } from '../lib/match'
+import { buildScorecardPDF } from '../lib/pdf'
 
 const DISMISSALS: DismissalType[] = [
   'Bowled',
@@ -48,7 +49,6 @@ type WicketStep = 'type' | 'runout-who' | 'fielder' | 'incoming' | null
 
 export function Live({ matchId, onBack }: { matchId: string; onBack: () => void }) {
   const [match, setMatch] = useState<Match | null | undefined>(undefined) // undefined = still loading
-  const [copied, setCopied] = useState(false)
   useEffect(() => {
     setMatch(undefined)
     return watchMatch(matchId, setMatch)
@@ -212,31 +212,8 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
         <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
           {match.teamA.name} vs {match.teamB.name}
         </span>
-        <button
-          onClick={async () => {
-            const url = `${location.origin}${location.pathname}#${match.id}`
-            try {
-              await navigator.clipboard.writeText(url)
-            } catch {
-              prompt('Copy this link:', url)
-              return
-            }
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1800)
-          }}
-          className="text-[18px]"
-          style={{ color: 'var(--text-secondary)' }}
-          aria-label="Share match link"
-        >
-          {copied ? '✓' : '🔗'}
-        </button>
+        <span style={{ width: 20 }} aria-hidden="true" />
       </div>
-
-      {!isFirebaseConfigured() && (
-        <p className="mb-3 text-[11.5px]" style={{ color: 'var(--text-muted)' }}>
-          Local-only mode: this link only works on this device until Firebase is set up (see README).
-        </p>
-      )}
 
       <div className="mb-4 flex rounded-xl p-1" style={{ background: 'var(--surface-card)' }}>
         {(['score', 'scorecard'] as const).map((t) => (
@@ -666,6 +643,16 @@ function Scorecard({ match }: { match: Match }) {
     URL.revokeObjectURL(url)
   }
 
+  function exportPDF() {
+    setDownloading(true)
+    try {
+      const doc = buildScorecardPDF(match)
+      doc.save(`${match.teamA.name}-vs-${match.teamB.name}-${new Date(match.createdAt).toISOString().slice(0, 10)}.pdf`.replace(/\s+/g, '-'))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {match.innings.map((inn, idx) => (
@@ -752,6 +739,14 @@ function Scorecard({ match }: { match: Match }) {
         </button>
         <button onClick={exportJSON} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-semibold" style={{ background: 'var(--surface-card)', color: 'var(--text-primary)', border: '1px solid var(--border-hairline)' }}>
           Export JSON
+        </button>
+        <button
+          onClick={exportPDF}
+          disabled={downloading}
+          className="flex-1 rounded-xl py-2.5 text-[13.5px] font-semibold text-white"
+          style={{ background: 'var(--pitch)' }}
+        >
+          Export PDF
         </button>
       </div>
     </div>
