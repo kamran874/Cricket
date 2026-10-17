@@ -110,7 +110,14 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
     persist()
   }
 
-  const needsNewBowler = innings.overs.length > 0 && isNewOverStarting(innings)
+  // A new over needs a bowler prompt only until one is actually chosen —
+  // right after an over completes, currentBowlerId still equals
+  // previousBowlerId (addBall only copies it over, it never clears it), so
+  // that equality is what flips back to false once a (different) bowler is
+  // picked. Gating on ball count alone kept this stuck forever, since
+  // picking a bowler doesn't bowl a ball.
+  const needsNewBowler =
+    innings.overs.length > 0 && isNewOverStarting(innings) && innings.currentBowlerId === innings.previousBowlerId
   const battingTeamName = team(m, innings.battingTeam).name
   const bowlingTeamName = team(m, bowlingTeamKey(m, innings)).name
 
@@ -332,12 +339,17 @@ export function Live({ matchId, onBack }: { matchId: string; onBack: () => void 
               <NameEntry
                 knownPlayers={bowlerChoices}
                 placeholder="Bowler name"
-                onSubmit={(name) =>
+                onSubmit={(name) => {
+                  const bowlingTeam = team(m, bowlingTeamKey(m, innings))
+                  const id = resolveOrCreatePlayer(bowlingTeam, name)
+                  if (id === innings.previousBowlerId) {
+                    alert("That bowler just finished the previous over — pick someone else.")
+                    return
+                  }
                   mutate(() => {
-                    const bowlingTeam = team(m, bowlingTeamKey(m, innings))
-                    innings.currentBowlerId = resolveOrCreatePlayer(bowlingTeam, name)
+                    innings.currentBowlerId = id
                   })
-                }
+                }}
               />
             </div>
           )}
