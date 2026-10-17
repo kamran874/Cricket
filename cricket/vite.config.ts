@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Star Kala Gujran — Cricket Scorer',
-        short_name: 'Star Kala Gujran',
-        description: 'Ball-by-ball cricket scoring with full batting and bowling cards, for Star Kala Gujran matches.',
+        name: 'Star Kala CC — Cricket Scorer',
+        short_name: 'Star Kala CC',
+        description: 'Ball-by-ball cricket scoring with full batting and bowling cards, for Star Kala CC matches.',
         theme_color: '#1f6b45',
         background_color: '#0d1410',
         display: 'standalone',

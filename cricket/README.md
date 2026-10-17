@@ -1,4 +1,4 @@
-# Star Kala Gujran — Cricket Scorer
+# Star Kala CC — Cricket Scorer
 
 Ball-by-ball cricket scoring for weekly matches: quick team/overs/toss setup,
 then just name each batsman and bowler as they come up — no need to enter a
@@ -34,7 +34,7 @@ saying which mode you're in.
 ### One-time setup (~10 minutes)
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com) and sign in with any Google account.
-2. **Add project** → give it any name (e.g. "star-kala-gujran") → you can
+2. **Add project** → give it any name (e.g. "star-kala-cc") → you can
    decline Google Analytics, it's not needed → **Create project**.
 3. In the left sidebar: **Build → Firestore Database → Create database**.
    Choose any region close to you, and start in **production mode**.

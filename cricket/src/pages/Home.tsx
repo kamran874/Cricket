@@ -19,7 +19,7 @@ export function Home({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: (
       <div className="mb-1 flex items-center gap-2">
         <span className="text-[20px]">🏏</span>
         <span className="text-[13px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-          Star Kala Gujran
+          Star Kala CC
         </span>
       </div>
       <h1 className="mb-3 text-[26px] font-bold" style={{ fontFamily: "'Oswald'", color: 'var(--text-primary)' }}>

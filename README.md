@@ -6,7 +6,7 @@ backend — built with React, TypeScript, Tailwind CSS, and Vite.
 | App | Path | What it does |
 |---|---|---|
 | **[Ledger](#ledger--daily-expense-tracker)** | `/` (repo root) | Daily expense tracker with weekly/bi-weekly/monthly reports |
-| **[Star Kala Gujran — Cricket Scorer](cricket/README.md)** | `/cricket` | Ball-by-ball cricket scoring with full batting/bowling cards |
+| **[Star Kala CC — Cricket Scorer](cricket/README.md)** | `/cricket` | Ball-by-ball cricket scoring with full batting/bowling cards |
 
 Both deploy together via `.github/workflows/deploy-pages.yml` to one GitHub
 Pages site: the Ledger app at the site root, the cricket scorer at `/cricket/`.

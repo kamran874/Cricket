@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import teamPhoto from '../assets/team-photo.jpg'
 
 export function Splash({ onDone }: { onDone: () => void }) {
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    const t1 = setTimeout(() => setFading(true), 1600)
-    const t2 = setTimeout(onDone, 2000)
+    const t1 = setTimeout(() => setFading(true), 2900)
+    const t2 = setTimeout(onDone, 3300)
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
@@ -15,52 +16,46 @@ export function Splash({ onDone }: { onDone: () => void }) {
   return (
     <div
       onClick={onDone}
-      className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500"
+      className="fixed inset-0 flex flex-col items-center overflow-hidden transition-opacity duration-500"
       style={{ background: '#0d1f16', opacity: fading ? 0 : 1 }}
     >
       <svg viewBox="0 0 400 700" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
         <defs>
-          <radialGradient id="floodlight" cx="50%" cy="8%" r="75%">
+          <radialGradient id="floodlight" cx="50%" cy="4%" r="80%">
             <stop offset="0%" stopColor="#2a5c3f" />
             <stop offset="100%" stopColor="#0d1f16" />
           </radialGradient>
-          <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1f6b45" />
-            <stop offset="100%" stopColor="#164d32" />
-          </linearGradient>
         </defs>
         <rect width="400" height="700" fill="url(#floodlight)" />
-        {/* stadium curve */}
-        <ellipse cx="200" cy="560" rx="340" ry="200" fill="url(#pitch)" opacity="0.9" />
-        <ellipse cx="200" cy="560" rx="340" ry="200" fill="none" stroke="#f3ead3" strokeOpacity="0.15" strokeWidth="2" />
-        {/* pitch strip */}
-        <polygon points="170,700 230,700 205,420 195,420" fill="#d9c79a" opacity="0.35" />
-        {/* stumps silhouette */}
-        <g opacity="0.95">
-          <rect x="188" y="460" width="6" height="60" fill="#f3ead3" />
-          <rect x="200" y="460" width="6" height="60" fill="#f3ead3" />
-          <rect x="212" y="460" width="6" height="60" fill="#f3ead3" />
-          <rect x="186" y="455" width="34" height="5" fill="#f3ead3" />
-        </g>
-        {/* floodlight beams */}
-        {[-120, -40, 40, 120].map((dx) => (
-          <polygon key={dx} points={`${200 + dx},0 ${200 + dx - 30},700 ${200 + dx + 30},700`} fill="#f3ead3" opacity="0.025" />
+        {[-140, -55, 55, 140].map((dx) => (
+          <polygon key={dx} points={`${200 + dx},0 ${200 + dx - 36},700 ${200 + dx + 36},700`} fill="#f3ead3" opacity="0.025" />
         ))}
-        {/* ball */}
-        <circle cx="278" cy="430" r="16" fill="#a8222c" opacity="0.95" />
+        <ellipse cx="200" cy="760" rx="360" ry="210" fill="none" stroke="#f3ead3" strokeOpacity="0.12" strokeWidth="2" />
       </svg>
 
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
-        <span className="mb-3 text-[13px] font-semibold uppercase tracking-[0.25em]" style={{ color: '#f3ead3cc' }}>
+      <div className="relative z-10 flex h-full w-full flex-col items-center px-8" style={{ paddingTop: '13vh' }}>
+        <div
+          className="overflow-hidden rounded-[28px]"
+          style={{
+            width: 'min(62vw, 260px)',
+            aspectRatio: '1 / 1',
+            border: '3px solid #f3ead3',
+            boxShadow: '0 18px 40px -12px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)',
+          }}
+        >
+          <img src={teamPhoto} alt="Star Kala CC" className="h-full w-full object-cover" style={{ objectPosition: '50% 30%' }} />
+        </div>
+
+        <div className="mt-8 h-[2px] w-10 rounded-full" style={{ background: '#a8222c' }} />
+        <span className="mt-4 text-[12px] font-semibold uppercase tracking-[0.3em]" style={{ color: '#f3ead3b3' }}>
           Cricket Scorer
         </span>
         <h1
-          className="text-[40px] font-bold leading-tight"
+          className="mt-1 text-center text-[38px] font-bold leading-tight"
           style={{ fontFamily: "'Oswald', system-ui, sans-serif", color: '#f8faf4' }}
         >
-          Star Kala Gujran
+          Star Kala CC
         </h1>
-        <div className="mt-6 h-[3px] w-16 rounded-full" style={{ background: '#a8222c' }} />
       </div>
     </div>
   )

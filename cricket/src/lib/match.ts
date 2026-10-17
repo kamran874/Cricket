@@ -136,7 +136,7 @@ function csvRow(arr: unknown[]): string {
 
 export function buildScorecardCSV(match: Match): string {
   const lines: string[] = []
-  lines.push(csvRow(['Star Kala Gujran — Match Scorecard']))
+  lines.push(csvRow(['Star Kala CC — Match Scorecard']))
   lines.push(csvRow([match.teamA.name, 'vs', match.teamB.name]))
   lines.push(csvRow(['Overs', match.oversLimit, 'Toss', `${team(match, match.tossWinner).name} won, chose to ${match.tossDecision}`]))
   lines.push(csvRow(['Result', match.result ?? 'In progress']))

@@ -62,7 +62,7 @@ export function Setup({ onStarted, onCancel }: { onStarted: (matchId: string) =>
           <input
             value={teamAName}
             onChange={(e) => setTeamAName(e.target.value)}
-            placeholder="e.g. Star Kala Gujran"
+            placeholder="e.g. Star Kala CC"
             className={inputClass + ' mb-4'}
             style={inputStyle}
           />
