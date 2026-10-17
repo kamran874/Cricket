@@ -47,7 +47,7 @@ npm run preview   # preview the production build
 3. Launch it from the Home Screen icon — it opens full-screen, like a regular app.
 
 See the repo root [`README.md`](../README.md) for how this app is deployed
-alongside Ledger via GitHub Pages.
+via GitHub Pages.
 
 ## Building the Android APK
 
