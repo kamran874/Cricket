@@ -23,11 +23,23 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm run build
+          cache-dependency-path: |
+            package-lock.json
+            cricket/package-lock.json
+      - name: Build Ledger (root app)
+        run: npm ci && npm run build
+      - name: Build Cricket Scorer (Star Kala Gujran)
+        working-directory: cricket
+        run: npm ci && npm run build
+      - name: Combine into one site (root = Ledger, /cricket/ = Cricket Scorer)
+        run: |
+          mkdir -p site
+          cp -r dist/. site/
+          mkdir -p site/cricket
+          cp -r cricket/dist/. site/cricket/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build

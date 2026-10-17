@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Star Kala Gujran</string>
+    <string name="title_activity_main">Star Kala Gujran</string>
+    <string name="package_name">com.starkalagujran.cricketscorer</string>
+    <string name="custom_url_scheme">com.starkalagujran.cricketscorer</string>
+</resources>
